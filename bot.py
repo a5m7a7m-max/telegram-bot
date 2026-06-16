@@ -2,7 +2,7 @@ from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKe
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 import openai
 
-TOKEN = "8874734813:AAHHd8MTlhJSHPsmjQDBNChQs215JvEVpN0"
+TOKEN = "8874734813:AAFU6E0FKJmOdqRTYrpM0InMmtcdRHVbhtA"
 OPENROUTER_API_KEY = "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"
 
 openai.api_base = "https://openrouter.ai/api/v1"
