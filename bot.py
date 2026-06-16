@@ -1,175 +1,206 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
+import openai
 
 TOKEN = "8874734813:AAHHd8MTlhJSHPsmjQDBNChQs215JvEVpN0"
+OPENROUTER_API_KEY = "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"
+
+openai.api_base = "https://openrouter.ai/api/v1"
+openai.api_key = OPENROUTER_API_KEY
 
 ADMIN_ID = 8559323592
-WALLET = "TFcLisJ8jTNTBbTU2LoGC3Mo6AQ1UnzJw5"
+USDT_ADDRESS = "TQ5bf2cVuBaTNmE8woNdyDsoAWQJdwMaef"
+NETWORK = "TRC20"
+CONTACT = "@Dr_7_Khaled"
+RESULTS_CHANNEL = "https://t.me/Dr_6_Khaled"
 
-PRIVATE_CHANNEL_LINK = "https://t.me/+m5tt78scF2RhODFk"
-PRIVATE_CHANNEL_LINK2 = "https://t.me/+MHIdsX4IcysyODVk"
+PRIVATE_CHANNELS = """
+✅ تم قبول اشتراكك
 
-PUBLIC_CHANNEL = "https://t.me/Dr_6_Khaled"
-SUPPORT = "@Dr_7_Khaled"
+روابط القنوات الخاصة:
 
+القناة الأولى:
+https://t.me/+eRhZxFFl0oYwN2Zk
 
-def main_menu():
-    keyboard = [
-        [InlineKeyboardButton("📊 مميزات القناة", callback_data="features")],
-        [InlineKeyboardButton("💎 أسعار الاشتراك", callback_data="prices")],
-        [InlineKeyboardButton("💳 الدفع", callback_data="payment")],
-        [InlineKeyboardButton("📈 نتائج التوصيات", callback_data="results")],
-        [InlineKeyboardButton("🔐 الاشتراك بالقناة الخاصة", callback_data="subscribe")],
-        [InlineKeyboardButton("📞 التواصل", callback_data="support")],
-    ]
-    return InlineKeyboardMarkup(keyboard)
+القناة الثانية:
+https://t.me/+D7do_Sb7MoxjYmZk
+"""
 
+keyboard = [
+    ["💎 أسعار الاشتراك", "🎥 شرح التحويل"],
+    ["📊 ميزات القناة", "💳 الدفع"],
+    ["📈 نتائج التوصيات", "📢 قناة النتائج"],
+    ["🔐 الاشتراك بالقناة", "📞 التواصل"],
+    ["❓ الأسئلة الشائعة"]
+]
+
+markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+def ai_answer(user_text):
+    try:
+        res = openai.ChatCompletion.create(
+            model="openai/gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": f"""
+أنت Dr Khaled، موظف مبيعات حقيقي لقناة توصيات كريبتو.
+
+تكلم عربي طبيعي وقصير كأنك شخص في تيليجرام.
+لا تكرر الترحيب.
+لا تكرر الأسعار إلا إذا طلبها العميل.
+لا تقل لا نقدم فيوتشر أو سبوت.
+إذا سأل عن فيوتشر أو سبوت قل: عندنا توصيات فيوتشر وسبوت يومياً.
+إذا قال مهتم أو نعم اسأله: أي باقة تناسبك؟
+إذا اعترض أو قال نصاب رد بهدوء وثقة ووجهه لقناة النتائج.
+إذا سأل عن النتائج أرسل: {RESULTS_CHANNEL}
+إذا سأل عن التواصل أرسل: {CONTACT}
+إذا قال دفعت أو حولت اطلب صورة الإيصال.
+
+الأسعار:
+شهر 30 دولار
+شهرين 60 دولار
+3 أشهر 80 دولار
+سنة 200 دولار
+
+إذا اختار العميل باقة ووافق، لا تكتب كلمة العنوان. اكتب عنوان المحفظة فقط في سطر مستقل، ثم اكتب: الشبكة TRC20 في السطر التالي.
+{USDT_ADDRESS}
+الشبكة TRC20
+
+هدفك تقنع العميل بالاشتراك بدون إطالة.
+"""
+                },
+                {"role": "user", "content": user_text}
+            ],
+            max_tokens=180,
+            temperature=0.9
+        )
+        return res["choices"][0]["message"]["content"]
+    except Exception as e:
+        return "حدث خطأ مؤقت، جرّب مرة ثانية."
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "👋 أهلاً بك في بوت Dr Khaled\n\nاختر من القائمة:",
-        reply_markup=main_menu()
+        "أهلاً وسهلاً فيك 👋\nأنا مساعدك الخاص بالقناة.\nاكتب سؤالك أو اختر من الأزرار بالأسفل.",
+        reply_markup=markup
     )
 
+async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text.strip()
 
-async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
+    if text == "💎 أسعار الاشتراك":
+        await update.message.reply_text("💎 الأسعار:\n\nشهر: 30$\nشهرين: 60$\n3 أشهر: 80$\nسنوي: 200$")
 
-    if query.data == "features":
-        text = """📊 مميزات القناة الخاصة
-
-✅ توصيات يومية فيوتشر وسبوت
-✅ من 3 إلى 6 توصيات فيوتشر يومياً
-✅ من 3 إلى 6 توصيات سبوت يومياً
-✅ أرباح الفيوتشر اليومية من 50% إلى 500%
-✅ أرباح السبوت اليومية من 5% إلى 50%
-✅ نسبة نجاح التوصيات 85%
-"""
-        await query.message.reply_text(text, reply_markup=main_menu())
-
-    elif query.data == "prices":
-        text = """💎 أسعار الاشتراك في القناة الخاصة ✅
-
-🔹 اشتراك شهر = 30$
-🔹 اشتراك شهرين = 60$
-🔹 اشتراك 3 أشهر = 80$
-🔹 اشتراك سنة كاملة = 200$
-"""
-        await query.message.reply_text(text, reply_markup=main_menu())
-
-    elif query.data == "payment":
-        text = f"""💳 الدفع عبر USDT TRC20
-
-عنوان المحفظة:
-
-{WALLET}
-
-📸 بعد التحويل أرسل صورة إثبات الدفع هنا.
-"""
-        await query.message.reply_text(text, reply_markup=main_menu())
-
-    elif query.data == "results":
-        await query.message.reply_text(
-            f"📈 نتائج التوصيات:\n{PUBLIC_CHANNEL}",
-            reply_markup=main_menu()
+    elif text == "📊 ميزات القناة":
+        await update.message.reply_text(
+            "📊 مميزات القناة:\n\n"
+            "✅ توصيات يومية فيوتشر وسبوت\n"
+            "✅ من 3 إلى 6 توصيات فيوتشر يومياً\n"
+            "✅ من 3 إلى 6 توصيات سبوت يومياً\n"
+            "✅ نسبة نجاح التوصيات 85%\n"
+            "🔥 متابعة مستمرة للسوق"
         )
 
-    elif query.data == "subscribe":
-        await query.message.reply_text(
-            "🔐 للاشتراك بالقناة الخاصة:\n\n1️⃣ ادفع على المحفظة\n2️⃣ أرسل صورة التحويل هنا\n3️⃣ بعد الموافقة تصلك روابط القناتين الخاصة",
-            reply_markup=main_menu()
+    elif text == "💳 الدفع":
+        await update.message.reply_text(
+            f"💳 الدفع عبر USDT\n\nالشبكة: {NETWORK}\n\nالعنوان:\n{USDT_ADDRESS}\n\n📌 هذا العنوان الي تحوله له"
         )
 
-    elif query.data == "support":
-        await query.message.reply_text(
-            f"📞 حساب الدعم الفني:\n{SUPPORT}",
-            reply_markup=main_menu()
+    elif text == "🎥 شرح التحويل":
+        await update.message.reply_text(
+            f"🎥 شرح التحويل:\n\n"
+            f"1️⃣ افتح Binance\n"
+            f"2️⃣ اختر إرسال / سحب\n"
+            f"3️⃣ اختر USDT\n"
+            f"4️⃣ الصق العنوان:\n{USDT_ADDRESS}\n"
+            f"5️⃣ الشبكة: {NETWORK}\n"
+            f"6️⃣ بعد التحويل أرسل صورة الإيصال هنا"
         )
 
+    elif text == "📈 نتائج التوصيات":
+        await update.message.reply_text(f"📈 نتائج التوصيات:\n{RESULTS_CHANNEL}")
 
-async def receive_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    photo = update.message.photo[-1]
+    elif text == "📢 قناة النتائج":
+        await update.message.reply_text(f"📢 قناة النتائج:\n{RESULTS_CHANNEL}")
 
-    keyboard = [[
-        InlineKeyboardButton("✅ قبول الاشتراك", callback_data=f"approve_{user.id}"),
-        InlineKeyboardButton("❌ رفض الاشتراك", callback_data=f"reject_{user.id}")
-    ]]
+    elif text == "🔐 الاشتراك بالقناة":
+        await update.message.reply_text(
+            "🔐 طريقة الاشتراك:\n\n"
+            "1️⃣ اختر مدة الاشتراك\n"
+            "2️⃣ حوّل USDT على شبكة TRC20\n"
+            "3️⃣ أرسل صورة الإيصال هنا\n"
+            "4️⃣ الإدارة تراجع الطلب\n"
+            "5️⃣ بعد القبول تصلك روابط القنوات تلقائياً"
+        )
 
-    caption = f"""📥 إثبات تحويل جديد
+    elif text == "📞 التواصل":
+        await update.message.reply_text(f"📞 الحساب الرسمي:\n{CONTACT}")
 
-👤 الاسم: {user.full_name}
-🔗 اليوزر: @{user.username}
-🆔 ID: {user.id}
-"""
+    elif text == "❓ الأسئلة الشائعة":
+        await update.message.reply_text(
+            "❓ الأسئلة الشائعة:\n\n"
+            "كيف أشترك؟ أرسل التحويل ثم صورة الإيصال.\n"
+            "ما الشبكة؟ TRC20\n"
+            "متى تصل الروابط؟ بعد قبول الإدارة.\n"
+            f"التواصل: {CONTACT}"
+        )
+
+    else:
+        user_id = update.message.from_user.id
+        old = context.user_data.get("last_ai", "")
+        full_text = f"الرسالة السابقة: {old}\nرسالة العميل الآن: {text}"
+        answer = ai_answer(full_text)
+        context.user_data["last_ai"] = f"العميل قال: {text}\nأنت رددت: {answer}"
+        await update.message.reply_text(answer, reply_markup=markup)
+
+async def receive_receipt(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.message.from_user
+    user_id = user.id
+    username = f"@{user.username}" if user.username else "لا يوجد"
+
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("✅ قبول", callback_data=f"approve:{user_id}"),
+            InlineKeyboardButton("❌ رفض", callback_data=f"reject:{user_id}")
+        ]
+    ])
+
+    caption = f"📩 إيصال جديد\n\nالاسم: {user.full_name}\nاليوزر: {username}\nID: {user_id}\n\nاختر قبول أو رفض:"
 
     await context.bot.send_photo(
         chat_id=ADMIN_ID,
-        photo=photo.file_id,
+        photo=update.message.photo[-1].file_id,
         caption=caption,
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        reply_markup=buttons
     )
 
-    await update.message.reply_text(
-        "✅ تم استلام إثبات الدفع.\nسيتم مراجعة الطلب وتفعيل الاشتراك قريباً."
-    )
+    await update.message.reply_text("✅ تم استلام الإيصال، سيتم مراجعته من الإدارة.", reply_markup=markup)
 
-
-async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def admin_decision(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
     if query.from_user.id != ADMIN_ID:
-        await query.message.reply_text("❌ هذا الزر للمدير فقط")
+        await query.answer("هذا الأمر خاص بالإدارة فقط.", show_alert=True)
         return
 
-    data = query.data
+    action, user_id = query.data.split(":")
+    user_id = int(user_id)
 
-    if data.startswith("approve_"):
-        user_id = int(data.replace("approve_", ""))
+    if action == "approve":
+        await context.bot.send_message(chat_id=user_id, text=PRIVATE_CHANNELS)
+        await query.edit_message_caption(caption="✅ تم قبول الطلب وإرسال روابط القنوات.")
 
-        await context.bot.send_message(
-            chat_id=user_id,
-            text=f"""✅ تم تفعيل اشتراكك بنجاح.
+    elif action == "reject":
+        await context.bot.send_message(chat_id=user_id, text=f"❌ تم رفض الإيصال.\nتواصل مع الإدارة: {CONTACT}")
+        await query.edit_message_caption(caption="❌ تم رفض الطلب.")
 
-🔐 رابط القناة الأولى:
-{PRIVATE_CHANNEL_LINK}
+app = Application.builder().token(TOKEN).build()
 
-🔐 رابط القناة الثانية:
-{PRIVATE_CHANNEL_LINK2}
-"""
-        )
+app.add_handler(CommandHandler("start", start))
+app.add_handler(MessageHandler(filters.PHOTO, receive_receipt))
+app.add_handler(CallbackQueryHandler(admin_decision))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply))
 
-        await query.message.reply_text("✅ تم قبول الاشتراك.")
-
-    elif data.startswith("reject_"):
-        user_id = int(data.replace("reject_", ""))
-
-        await context.bot.send_message(
-            chat_id=user_id,
-            text="❌ تم رفض طلب الاشتراك.\nيرجى التواصل مع الدعم."
-        )
-
-        await query.message.reply_text("❌ تم رفض الطلب.")
-
-
-async def receive_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("📸 إذا دفعت، أرسل صورة التحويل هنا.")
-
-
-def main():
-    app = Application.builder().token(TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(admin_buttons, pattern="^(approve_|reject_)"))
-    app.add_handler(CallbackQueryHandler(buttons))
-    app.add_handler(MessageHandler(filters.PHOTO, receive_photo))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, receive_text))
-
-    print("Bot Started...")
-    app.run_polling()
-
-
-if __name__ == "__main__":
-    main()
+print("Bot is running...")
+app.run_polling()
