@@ -39,7 +39,7 @@ markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 def ai_answer(user_text):
     try:
         res = openai.ChatCompletion.create(
-            model="openai/gpt-4o-mini",
+            model="openai/gpt-4.1-mini",
             messages=[
                 {
                     "role": "system",
