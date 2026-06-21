@@ -9,7 +9,7 @@ openai.api_base = "https://openrouter.ai/api/v1"
 openai.api_key = OPENROUTER_API_KEY
 
 ADMIN_ID = 8559323592
-USDT_ADDRESS = "TQ5bf2cVuBaTNmE8woNdyDsoAWQJdwMaef"
+USDT_ADDRESS = "TX8rWqbsBJsQAYo7qTtyJhxkX5FdGckbaM"
 NETWORK = "TRC20"
 CONTACT = "@Dr_7_Khaled"
 RESULTS_CHANNEL = "https://t.me/Dr_6_Khaled"
